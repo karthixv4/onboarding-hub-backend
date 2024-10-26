@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role
+  managerId Int? // Optional: User ID of the reporting manager
+  manager   User?     @relation("UserManager", fields: [managerId], references: [id])
+  reportees User[]    @relation("UserManager") // Users who report to this user
+  resource  Resource? // Pointing to a single resource associated with this user
+  initialSetup InitialSetup?
+}
+
+model Resource {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userEmail], references: [email])
+  userEmail        String   @unique
+  onboardingStatus String
+  setupCompleted   Boolean  @default(false)
+  ktPlans          KTPlan[] // One resource can have multiple KT plans
+}
+
+model KTPlan {
+  id          Int          @id @default(autoincrement())
+  resourceId  Int // Foreign key to Resource
+  resource    Resource     @relation(fields: [resourceId], references: [id]) // Define the relationship
+  progress    ProgressEnum // Enum for progress status
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+  actionItems ActionItem[] // Relation to an action items model
+}
+
+enum ProgressEnum {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model ActionItem {
+  id          Int     @id @default(autoincrement())
+  ktPlanId    Int
+  ktPlan      KTPlan  @relation(fields: [ktPlanId], references: [id])
+  description String
+  completed   Boolean @default(false)
+}
+
+enum Role {
+  manager
+  resource
+}
+
+model InitialSetup {
+  id          Int    @id
+  name        String
+  description String
+  user        User     @relation(fields: [userEmail], references: [email])
+  userEmail   String   @unique
+
+}
