@@ -14,25 +14,44 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      Role
-  managerId Int? // Optional: User ID of the reporting manager
-  manager   User?     @relation("UserManager", fields: [managerId], references: [id])
-  reportees User[]    @relation("UserManager") // Users who report to this user
-  resource  Resource? // Pointing to a single resource associated with this user
-  initialSetup InitialSetup?
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  email                 String    @unique
+  password              String
+  role                  Role?
+  managerId             Int? // Optional: User ID of the reporting manager
+  manager               User?     @relation("UserManager", fields: [managerId], references: [id])
+  reportees             User[]    @relation("UserManager") // Users who report to this user
+  resource              Resource? // Only users with this field populated are resources
+  onBoardingStartedFlag Boolean?
 }
 
 model Resource {
-  id               Int      @id @default(autoincrement())
-  user             User     @relation(fields: [userEmail], references: [email])
-  userEmail        String   @unique
+  id               Int           @id @default(autoincrement())
+  user             User          @relation(fields: [userEmail], references: [email])
+  userEmail        String        @unique
   onboardingStatus String
-  setupCompleted   Boolean  @default(false)
+  setupCompleted   Boolean       @default(false)
+  team             String?
+  position         String?
   ktPlans          KTPlan[] // One resource can have multiple KT plans
+  initialSetup     InitialSetup? // Relation to initial setup for the resource
+}
+
+model InitialSetup {
+  id             Int                @id @default(autoincrement())
+  resource       Resource           @relation(fields: [resourceId], references: [id])
+  resourceId     Int                @unique // Ensure each resource has only one initial setup
+  setupTasks     InitialSetupTask[] // List of setup tasks associated with this initial setup
+  setupCompleted Boolean            @default(false) // Indicates if all tasks are completed
+}
+
+model InitialSetupTask {
+  id             Int          @id @default(autoincrement())
+  initialSetupId Int // Foreign key to InitialSetup
+  initialSetup   InitialSetup @relation(fields: [initialSetupId], references: [id])
+  description    String // Describes the specific task (e.g., "Profile creation")
+  completed      Boolean      @default(false) // Task completion status
 }
 
 model KTPlan {
@@ -43,6 +62,8 @@ model KTPlan {
   startDate   DateTime?
   endDate     DateTime?
   description String?
+  name        String?
+  remarks     String?
   actionItems ActionItem[] // Relation to an action items model
 }
 
@@ -63,13 +84,4 @@ model ActionItem {
 enum Role {
   manager
   resource
-}
-
-model InitialSetup {
-  id          Int    @id
-  name        String
-  description String
-  user        User     @relation(fields: [userEmail], references: [email])
-  userEmail   String   @unique
-
 }

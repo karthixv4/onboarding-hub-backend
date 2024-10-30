@@ -35,7 +35,8 @@ exports.getAllUsers = async (req, res) => {
             select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                onBoardingStartedFlag: true
             }
         });
         return res.status(200).json(users)

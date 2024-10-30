@@ -7,7 +7,9 @@ const ktPlanSchema = z.object({
   progress: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
+  name: z.string().optional(),  // New field
+  remarks: z.string().optional() // New field
 });
 
 // Create a new KT Plan
@@ -61,7 +63,8 @@ exports.updateKTPlan = async (req, res) => {
   const { id } = req.params;
   try {
     const data = ktPlanSchema.partial().parse(req.body);
-console.log("KT PLAN DATA: ",data)
+    console.log("KT PLAN DATA: ", data);
+
     const ktPlan = await kTPlan.update({
       where: { id: parseInt(id) },
       data

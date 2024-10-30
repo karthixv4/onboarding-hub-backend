@@ -1,17 +1,21 @@
 const { z } = require('zod');
-const { Resource, KTPlan, User } = require('../models/prismaClient');
+const { Resource, KTPlan, User, initialSetup } = require('../models/prismaClient');
 
 // Zod schema for resource validation, includes optional `ktPlans`
 const resourceSchema = z.object({
-    userId: z.string().email(),  
-    onboardingStatus: z.string().min(1),  
+    userId: z.string().email(),
+    onboardingStatus: z.string().min(1),
     setupCompleted: z.boolean(),
+    team: z.string().optional(),
+    position: z.string().optional(),
     ktPlans: z.array(z.object({
         description: z.string().optional(),  // KT Plan description (optional)
         startDate: z.string().optional(),    // KT Plan start date (optional)
         endDate: z.string().optional(),      // KT Plan end date (optional)
         progress: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']).optional(),  // KT Plan progress
-    })).optional(),  // KT plans can be optional
+    })).optional(),
+
+
 });
 
 // Get all resources along with their related user and KT Plans
@@ -20,7 +24,12 @@ exports.getAllResources = async (req, res) => {
         const resources = await Resource.findMany({
             include: {
                 user: true,  // Include associated user
-                ktPlans: true,  // Include associated KT plans
+                ktPlans: true,
+                initialSetup: {
+                    include: {
+                        setupTasks: true // Include tasks under initial setup
+                    }
+                }  // Include associated KT plans
             }
         });
         res.json(resources);
@@ -31,8 +40,10 @@ exports.getAllResources = async (req, res) => {
 
 // Add a new resource with optional KT plans
 exports.addResource = async (req, res) => {
+    console.log("Inside add resource req: ", req.body);
     try {
         const validatedData = resourceSchema.parse(req.body);
+        console.log("Inside add resource validatedData: ", validatedData);
         console.log("Validated data", validatedData);
 
         const user = await User.findUnique({
@@ -51,10 +62,21 @@ exports.addResource = async (req, res) => {
                 setupCompleted: validatedData.setupCompleted,
                 ktPlans: {
                     create: validatedData.ktPlans || [],  // Create KT plans if provided
-                }
+                },
+                team: validatedData.team,
+                position: validatedData.position
             },
             include: { ktPlans: true }  // Include created KT plans in response
         });
+
+        if (resource) {
+            await User.update({
+                where: { email: user.email },
+                data: {
+                    onBoardingStartedFlag: true,
+                }
+            })
+        }
 
         res.status(201).json(resource);
     } catch (error) {
