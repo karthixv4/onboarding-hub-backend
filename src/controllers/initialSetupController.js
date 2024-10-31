@@ -8,7 +8,8 @@ const initialSetupSchema = z.object({
   setupTasks: z.array(z.object({
     id: z.number().int().optional(), // Optional ID for each task (existing tasks will have an ID)
     description: z.string().min(1, "Description is required"),
-    completed: z.boolean().default(false)
+    completed: z.boolean().default(false),
+    name: z.string().optional()
   })).optional()
 });
 
@@ -40,6 +41,7 @@ exports.createInitialSetup = async (req, res) => {
           create: setupTasks.map((task) => ({
             description: task.description,
             completed: task.completed || false,
+            name: task.name 
           })),
         } : undefined, // Do not include if no setupTasks provided
       },
@@ -104,15 +106,20 @@ exports.updateInitialSetup = async (req, res) => {
       setupTasks: {
         upsert: data.setupTasks.map((task) => ({
           where: { id: task.id },            // Use each task's `id` for identification
-          update: { completed: task.completed },
+          update: { completed: task.completed,
+            name: task.name,
+            description: task.description
+           },
           create: {
             id: task.id,                     // Explicitly provide `id` for creation if task doesn't exist
             description: task.description,
-            completed: task.completed
+            completed: task.completed,
+            name: task.name
           }
         }))
       }
     };
+    console.log("UPDATED DATA: ", updateData);
     const initialSetup = await InitialSetup.update({
       where: { id: parseInt(id) },
       data: updateData
@@ -141,5 +148,34 @@ exports.deleteInitialSetup = async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+exports.getInitialSetupsByUser = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ error: 'Invalid resource ID' });
+  }
+
+  try {
+    const initialSetup = await InitialSetup.findUnique({
+      where: { resourceId: Number(id) },
+      include: {
+        setupTasks: true,
+      },
+    });
+
+    if (!initialSetup) {
+      return res.status(404).json({ error: 'Initial setup not found' });
+    }
+
+    res.status(200).json(initialSetup);
+  } catch (error) {
+
+    console.error('Error fetching initial setup:', error);
+
+    res.status(500).json({ error: 'An error occurred while fetching initial setup' });
   }
 };

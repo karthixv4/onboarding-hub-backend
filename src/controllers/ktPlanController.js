@@ -89,3 +89,26 @@ exports.deleteKTPlan = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Get all KT Plans for a specific resource by resource ID
+exports.getKTPlansByResourceId = async (req, res) => {
+  const { resourceId } = req.params; // Extract resource ID from the request parameters
+  console.log("resourceId: ", resourceId);
+  try {
+      // Fetch KT plans for the specified resource ID
+      const ktPlans = await kTPlan.findMany({
+          where: { resourceId: parseInt(resourceId) }, // Query based on resourceId
+          include: {
+              actionItems: true // Optionally include related action items
+          }
+      });
+
+      if (ktPlans.length === 0) {
+          return res.status(404).json({ error: 'No KT Plans found for this resource' });
+      }
+
+      res.status(200).json(ktPlans); // Return the list of KT Plans
+  } catch (error) {
+      res.status(500).json({ error: "Unable to fetch KT Plans" });
+  }
+};

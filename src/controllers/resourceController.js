@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { Resource, KTPlan, User, initialSetup } = require('../models/prismaClient');
+const { Resource, KTPlan, User, initialSetup, actionItem } = require('../models/prismaClient');
 
 // Zod schema for resource validation, includes optional `ktPlans`
 const resourceSchema = z.object({
@@ -35,6 +35,29 @@ exports.getAllResources = async (req, res) => {
         res.json(resources);
     } catch (error) {
         res.status(500).json({ error: "Unable to fetch resources" });
+    }
+};
+
+exports.getAllResourcesWithKT = async (req, res) => {
+    try {
+        const resources = await Resource.findMany({
+            include: {
+                user: true,  // Include associated user
+                ktPlans: {
+                    include:{
+                        actionItems: true
+                    }
+                },
+                initialSetup: {
+                    include: {
+                        setupTasks: true // Include tasks under initial setup
+                    }
+                }  // Include associated KT plans
+            }
+        });
+        res.json(resources);
+    } catch (error) {
+        res.status(500).json({ actual: error });
     }
 };
 
@@ -161,3 +184,4 @@ exports.getResourcesByUserId = async (req, res) => {
         res.status(500).json({ error: "Unable to fetch resources" });
     }
 };
+

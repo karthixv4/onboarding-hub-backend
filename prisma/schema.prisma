@@ -52,6 +52,7 @@ model InitialSetupTask {
   initialSetup   InitialSetup @relation(fields: [initialSetupId], references: [id])
   description    String // Describes the specific task (e.g., "Profile creation")
   completed      Boolean      @default(false) // Task completion status
+  name           String?
 }
 
 model KTPlan {
