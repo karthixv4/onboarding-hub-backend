@@ -94,22 +94,23 @@ exports.getInitialSetupById = async (req, res) => {
 };
 
 // Update an InitialSetup
-// Update an InitialSetup
 exports.updateInitialSetup = async (req, res) => {
   const { id } = req.params;
 
   try {
     const data = initialSetupSchema.partial().parse(req.body);
-    // Map over `setupTasks` using `upsert` for each task, since each has an `id`
+    
+    // Map over `setupTasks` using `upsert` for each task
     const updateData = {
       setupCompleted: data.setupCompleted,
       setupTasks: {
         upsert: data.setupTasks.map((task) => ({
           where: { id: task.id },            // Use each task's `id` for identification
-          update: { completed: task.completed,
+          update: {
+            completed: task.completed,
             name: task.name,
             description: task.description
-           },
+          },
           create: {
             id: task.id,                     // Explicitly provide `id` for creation if task doesn't exist
             description: task.description,
@@ -119,16 +120,24 @@ exports.updateInitialSetup = async (req, res) => {
         }))
       }
     };
-    console.log("UPDATED DATA: ", updateData);
-    const initialSetup = await InitialSetup.update({
+
+    await InitialSetup.update({
       where: { id: parseInt(id) },
       data: updateData
     });
-    res.status(200).json(initialSetup);
+
+    // Fetch the updated initialSetup to return it
+    const updatedInitialSetup = await InitialSetup.findUnique({
+      where: { id: parseInt(id) },
+      include: { setupTasks: true } // Include related setupTasks if needed
+    });
+
+    res.status(200).json(updatedInitialSetup);
   } catch (error) {
     res.status(400).json({ error: error.errors || error.message });
   }
 };
+
 
 
 
