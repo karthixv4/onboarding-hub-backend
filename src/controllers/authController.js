@@ -41,6 +41,9 @@ exports.register = async (req, res) => {
                     : null,  // Set to null if the managerId is invalid
             },
         });
+
+        //sign and return token if user is created
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         // Automatically create a resource associated with the new user
         // const resource = await Resource.create({
         //     data: {
@@ -50,7 +53,7 @@ exports.register = async (req, res) => {
         //     },
         // });
 
-        res.status(201).json({ message: 'User created successfully', user });
+        res.status(201).json({ message: 'User created successfully', user,token, role: user.role  });
     } catch (error) {
         res.status(400).json({ error: error || "Something went wrong" });
     }
@@ -68,7 +71,7 @@ exports.login = async (req, res) => {
 
         // Generate JWT token
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+        res.json({ token, role: user.role });
     } catch (error) {
         res.status(400).json({ error: error.errors });
     }

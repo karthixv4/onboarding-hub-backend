@@ -39,6 +39,7 @@ exports.getAllResources = async (req, res) => {
 };
 
 exports.getAllResourcesWithKT = async (req, res) => {
+    console.log("REQ.USER: ", req.user);
     try {
         const resources = await Resource.findMany({
             include: {
