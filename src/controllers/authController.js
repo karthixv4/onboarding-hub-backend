@@ -64,14 +64,20 @@ exports.login = async (req, res) => {
     try {
         const validatedData = loginSchema.parse(req.body);  // Validate input using Zod
         const user = await User.findUnique({ where: { email: validatedData.email } });  // Find user by email
-
         if (!user || !(await bcrypt.compare(validatedData.password, user.password))) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+        let resourceId = null;
+        if (user.onBoardingStartedFlag) {
+            const resource = await Resource.findUnique({
+                where: { userEmail: user.email },
+                select: { id: true }, // Only select the resource's id
+            });
+            resourceId = resource?.id;
+        }
 
-        // Generate JWT token
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token, role: user.role });
+        res.json({ token, role: user.role, resourceId, name: user.name  });
     } catch (error) {
         res.status(400).json({ error: error.errors });
     }
