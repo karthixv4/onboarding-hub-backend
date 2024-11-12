@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "watch": "nodemon --ext js,hbs,css src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "prisma generate && node api/server.js",
+    "watch": "nodemon --ext js,hbs,css api/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma generate",
+    "build": "prisma generate"
   },
   "keywords": [],
   "author": "",
