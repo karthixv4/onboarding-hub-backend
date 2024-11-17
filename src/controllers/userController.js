@@ -14,7 +14,7 @@ exports.getUserDetails = async (req, res) => {
         const user = await User.findUnique({
             where: { id: userId },
             include: {
-                resources: true, // Include associated resources if needed
+                resource: true, // Include associated resources if needed
             }
         });
 

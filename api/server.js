@@ -13,7 +13,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:5173', // Your frontend URL
+    origin: 'https://onboarding-hub-frontend-nwn0d45j6-karthixv4s-projects.vercel.app', // Your frontend URL
     credentials: true, // Allow credentials to be sent
 }));
 app.use(cookieParser());
@@ -32,8 +32,8 @@ app.use('/api/kt', verifyJWT, ktRoutes);
 app.use('/api/initialSetup', verifyJWT, initialSetupRoutes);
 
 const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => {
-//     console.log(`Server is running on port ${PORT}`);
-// });
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
 module.exports = app
